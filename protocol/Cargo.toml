@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 nom = "7"
+bytes = "1"
+tokio-util = { version = "0.7", features = ["codec"] }

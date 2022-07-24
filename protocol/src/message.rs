@@ -26,7 +26,7 @@ use nom::{
 
 /// A parsed message.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Message {
+pub struct LanChatMessage {
     /// Optional Prefix, when forwarding messages from one client to another the server will add
     /// a `Prefix` to show the origin of the message. Messages from client to server should not
     /// contain a prefix.
@@ -51,7 +51,7 @@ impl fmt::Display for ParseMessageError {
     }
 }
 
-impl FromStr for Message {
+impl FromStr for LanChatMessage {
     type Err = ParseMessageError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -63,11 +63,11 @@ impl FromStr for Message {
 }
 
 // Message ::= (Prefix Space)? Command CRLF
-fn parse_message(input: &str) -> IResult<&str, Message> {
+fn parse_message(input: &str) -> IResult<&str, LanChatMessage> {
     complete(terminated(
         map(
             pair(opt(terminated(parse_prefix, char(' '))), parse_command),
-            |(prefix, command)| Message { prefix, command },
+            |(prefix, command)| LanChatMessage { prefix, command },
         ),
         crlf,
     ))(input)
@@ -75,7 +75,7 @@ fn parse_message(input: &str) -> IResult<&str, Message> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Prefix {
-    nick: String,
+    pub nick: String,
 }
 
 // Prefix ::= ':' Nickname ;
@@ -103,7 +103,7 @@ mod tests {
     #[test]
     fn parse_message_works() {
         let input = ":olly MSG :Hi!, how's it going?\r\n";
-        let expected = Message {
+        let expected = LanChatMessage {
             prefix: Some(Prefix {
                 nick: "olly".to_owned(),
             }),
@@ -117,12 +117,12 @@ mod tests {
     #[test]
     fn message_from_str() {
         let input = "NICK olly\r\n";
-        let expected = Message {
+        let expected = LanChatMessage {
             prefix: None,
             command: Command::Nick("olly".to_owned()),
         };
 
-        let message = input.parse::<Message>();
+        let message = input.parse::<LanChatMessage>();
 
         assert_eq!(Ok(expected), message);
     }
