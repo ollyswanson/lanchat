@@ -103,7 +103,7 @@ impl Decoder for LanChatCodec {
     }
 }
 
-impl<T> Encoder<T> for LanChatMessage
+impl<T> Encoder<T> for LanChatCodec
 where
     T: AsRef<str>,
 {

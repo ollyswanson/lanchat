@@ -282,6 +282,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "nom",
+ "protocol",
  "tokio",
  "tokio-util",
 ]
