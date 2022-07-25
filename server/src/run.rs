@@ -9,8 +9,8 @@ use crate::{connection, response::Response, server};
 pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
 
-    let (b_send, _) = broadcast::channel::<String>(10);
-    let (tx, rx) = mpsc::channel::<(SocketAddr, LanChatMessage, oneshot::Sender<Response>)>(100);
+    let (b_send, _) = broadcast::channel::<String>(8);
+    let (tx, rx) = mpsc::channel::<(SocketAddr, LanChatMessage, oneshot::Sender<Response>)>(128);
 
     let server_bcast = b_send.clone();
     tokio::spawn(async move { server::run_server(rx, server_bcast).await });
