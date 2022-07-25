@@ -1,9 +1,9 @@
 use tokio::sync::{broadcast, mpsc};
 use tokio::{net::TcpListener, sync::oneshot};
 
-use crate::{connection, internal_message::InternalMessage, server};
+use crate::{connection, internal_message::InternalMessage, server, BoxedError};
 
-pub async fn run() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+pub async fn run() -> Result<(), BoxedError> {
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
 
     let (b_send, _) = broadcast::channel::<String>(8);

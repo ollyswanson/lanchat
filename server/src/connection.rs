@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use futures::{SinkExt, StreamExt};
-use protocol::{codec::LanChatCodec, message::LanChatMessage};
+use protocol::codec::LanChatCodec;
 use tokio::{
     net::TcpStream,
     sync::{broadcast::Receiver, mpsc::Sender, oneshot},
@@ -23,6 +23,7 @@ pub(crate) async fn handle_connection(
         tokio::select!(
             msg = recv_frame.next() => {
                 // TODO: Handle errors
+                // TODO: Handle case where client hangs up without sending QUIT msg
                 if let Some(Ok(msg)) = msg {
                     let (once_send, once_recv) = oneshot::channel();
                     let _ = tx.send(InternalMessage::new(addr, msg, once_send)).await;
