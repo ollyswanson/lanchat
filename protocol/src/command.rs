@@ -1,3 +1,5 @@
+use std::fmt;
+
 use nom::{
     bytes::complete::{take, take_while},
     character::complete::{alpha1, char},
@@ -11,10 +13,12 @@ use nom::{
 #[derive(Debug, Clone, PartialEq)]
 pub enum Command {
     Nick(String),
-    Message(String),
+    Msg(String),
+    Quit,
 }
 
 impl TryFrom<(&str, Params<'_>)> for Command {
+    // TODO: Error handling (avoid boxed errors)
     type Error = Box<dyn std::error::Error + Send + Sync>;
 
     fn try_from((command, params): (&str, Params<'_>)) -> Result<Self, Self::Error> {
@@ -28,10 +32,23 @@ impl TryFrom<(&str, Params<'_>)> for Command {
                 }
             }
             "MSG" => match (middle.len(), trailing) {
-                (0, Some(msg)) => Ok(Command::Message(msg.to_owned())),
+                (0, Some(msg)) => Ok(Command::Msg(msg.to_owned())),
                 _ => Err("Incorrect params for command: MSG".into()),
             },
+            "QUIT" => Ok(Command::Quit),
             other => Err(format!("Unrecognized command: {}", other).into()),
+        }
+    }
+}
+
+impl fmt::Display for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Command::*;
+
+        match self {
+            Nick(nick) => write!(f, "NICK {}", nick),
+            Msg(msg) => write!(f, "MSG :{}", msg),
+            Quit => f.write_str("QUIT"),
         }
     }
 }
@@ -87,7 +104,7 @@ mod tests {
     #[test]
     fn parse_command_message_works() {
         let input = "MSG :this is a message";
-        let expected = Command::Message("this is a message".to_owned());
+        let expected = Command::Msg("this is a message".to_owned());
 
         let result = parse_command(input);
         assert_eq!(Ok(("", expected)), result);

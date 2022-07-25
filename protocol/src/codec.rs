@@ -176,7 +176,7 @@ mod tests {
 
         let expected = LanChatMessage {
             prefix: None,
-            command: Command::Message("Hi!".to_owned()),
+            command: Command::Msg("Hi!".to_owned()),
         };
 
         assert_eq!(expected, codec.decode(buf).unwrap().unwrap());
@@ -190,7 +190,7 @@ mod tests {
             prefix: Some(Prefix {
                 nick: "olly".to_owned(),
             }),
-            command: Command::Message("hello???".to_owned()),
+            command: Command::Msg("hello???".to_owned()),
         };
         assert_eq!(expected, codec.decode(buf).unwrap().unwrap());
     }
@@ -214,7 +214,7 @@ mod tests {
         buf.put_slice(b"\r\nMSG :ok!\r\n");
         let expected = LanChatMessage {
             prefix: None,
-            command: Command::Message("ok!".to_owned()),
+            command: Command::Msg("ok!".to_owned()),
         };
         assert_eq!(expected, codec.decode(buf).unwrap().unwrap());
 
@@ -226,7 +226,7 @@ mod tests {
         buf.put_slice(b"MSG :valid!\r\n");
         let expected = LanChatMessage {
             prefix: None,
-            command: Command::Message("valid!".to_owned()),
+            command: Command::Msg("valid!".to_owned()),
         };
         assert_eq!(expected, codec.decode(buf).unwrap().unwrap());
     }

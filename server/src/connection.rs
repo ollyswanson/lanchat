@@ -1,45 +1,38 @@
 use std::net::SocketAddr;
 
 use futures::{SinkExt, StreamExt};
-use protocol::{
-    codec::LanChatCodec,
-    command::Command,
-    message::{LanChatMessage, Prefix},
-};
+use protocol::{codec::LanChatCodec, message::LanChatMessage};
 use tokio::{
     net::TcpStream,
-    sync::{broadcast::Receiver, mpsc::Sender},
+    sync::{broadcast::Receiver, mpsc::Sender, oneshot},
 };
 use tokio_util::codec::Framed;
+
+use crate::response::Response;
 
 pub(crate) async fn handle_connection(
     socket: TcpStream,
     addr: SocketAddr,
-    tx: Sender<LanChatMessage>,
+    tx: Sender<(SocketAddr, LanChatMessage, oneshot::Sender<Response>)>,
     mut msg_broadcast: Receiver<String>,
 ) {
     let (mut send_frame, mut recv_frame) =
         Framed::new(socket, LanChatCodec::with_max_length(4096)).split();
 
-    // First message from the client must be the NICK command
-    let nickname = if let Some(Ok(LanChatMessage {
-        command: Command::Nick(nickname),
-        ..
-    })) = recv_frame.next().await
-    {
-        nickname
-    } else {
-        return;
-    };
-
-    let prefix = Prefix { nick: nickname };
-
     loop {
         tokio::select!(
             msg = recv_frame.next() => {
                 // TODO: Handle errors
+                // TODO: Send oneshot channel through channel to receive responses for commands
                 if let Some(Ok(msg)) = msg {
-                    let _ = tx.send(msg).await;
+                    let (once_send, once_recv) = oneshot::channel();
+                    let _ = tx.send((addr, msg, once_send)).await;
+                    if let Ok(response) = once_recv.await {
+                        match response {
+                            Response::Ack => {},
+                            Response::HangUp => { break; }
+                        }
+                    }
                 }
             }
             msg = msg_broadcast.recv() => {

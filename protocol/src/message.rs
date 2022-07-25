@@ -36,6 +36,16 @@ pub struct LanChatMessage {
     pub command: Command,
 }
 
+impl fmt::Display for LanChatMessage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(prefix) = &self.prefix {
+            write!(f, "{} ", prefix)?;
+        }
+
+        write!(f, "{}\r\n", self.command)
+    }
+}
+
 // TODO: Add more variants corresponding to the part of the message that caused the parsing error.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParseMessageError {
@@ -78,6 +88,12 @@ pub struct Prefix {
     pub nick: String,
 }
 
+impl fmt::Display for Prefix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, ":{}", self.nick)
+    }
+}
+
 // Prefix ::= ':' Nickname ;
 fn parse_prefix(input: &str) -> IResult<&str, Prefix> {
     map(preceded(char(':'), alpha1), |nick: &str| Prefix {
@@ -107,7 +123,7 @@ mod tests {
             prefix: Some(Prefix {
                 nick: "olly".to_owned(),
             }),
-            command: Command::Message("Hi!, how's it going?".to_owned()),
+            command: Command::Msg("Hi!, how's it going?".to_owned()),
         };
 
         let result = parse_message(input);
