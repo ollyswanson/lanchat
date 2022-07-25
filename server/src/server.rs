@@ -6,15 +6,17 @@ use protocol::{
 };
 use tokio::sync::{broadcast::Sender, mpsc::Receiver, oneshot};
 
-use crate::response::Response;
+use crate::internal_message::{InternalMessage, Response};
 
-pub(crate) async fn run_server(
-    mut recv: Receiver<(SocketAddr, LanChatMessage, oneshot::Sender<Response>)>,
-    msg_broadcast: Sender<String>,
-) {
+pub async fn run_server(mut recv: Receiver<InternalMessage>, msg_broadcast: Sender<String>) {
     let mut prefixes: HashMap<SocketAddr, Prefix> = HashMap::new();
 
-    while let Some((addr, mut msg, respond)) = recv.recv().await {
+    while let Some(InternalMessage {
+        addr,
+        mut msg,
+        respond,
+    }) = recv.recv().await
+    {
         match msg.command {
             Command::Msg(_) => {
                 let prefix = prefixes.get(&addr).cloned().unwrap_or_else(|| Prefix {

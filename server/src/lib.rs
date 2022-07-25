@@ -1,5 +1,5 @@
 mod connection;
-mod database;
+mod internal_message;
 mod response;
 mod run;
 mod server;

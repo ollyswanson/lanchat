@@ -8,12 +8,12 @@ use tokio::{
 };
 use tokio_util::codec::Framed;
 
-use crate::response::Response;
+use crate::internal_message::{InternalMessage, Response};
 
 pub(crate) async fn handle_connection(
     socket: TcpStream,
     addr: SocketAddr,
-    tx: Sender<(SocketAddr, LanChatMessage, oneshot::Sender<Response>)>,
+    tx: Sender<InternalMessage>,
     mut msg_broadcast: Receiver<String>,
 ) {
     let (mut send_frame, mut recv_frame) =
@@ -23,10 +23,9 @@ pub(crate) async fn handle_connection(
         tokio::select!(
             msg = recv_frame.next() => {
                 // TODO: Handle errors
-                // TODO: Send oneshot channel through channel to receive responses for commands
                 if let Some(Ok(msg)) = msg {
                     let (once_send, once_recv) = oneshot::channel();
-                    let _ = tx.send((addr, msg, once_send)).await;
+                    let _ = tx.send(InternalMessage::new(addr, msg, once_send)).await;
                     if let Ok(response) = once_recv.await {
                         match response {
                             Response::Ack => {},
